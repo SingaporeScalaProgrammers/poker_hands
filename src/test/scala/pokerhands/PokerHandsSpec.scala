@@ -10,7 +10,7 @@ class PokerSpec extends FlatSpec with Matchers with PropertyChecks{
   val cards = Gen.oneOf(Cards.pack)
 
 
-  val hands = deals.map(cards => Hand(cards(0),cards(1), cards(2), cards(3), cards(4)))
+  val hands = deals.map(cards => Hand(FiveCards(cards(0),cards(1), cards(2), cards(3), cards(4))))
 
   val threeHands = for{
     h1 <- hands
@@ -44,14 +44,11 @@ class PokerSpec extends FlatSpec with Matchers with PropertyChecks{
     }
   }
   "Straight Flush" should "be higher than any other hand that is not a straight flush" in {
-    val strFlush = StraightFlush(Card(Hearts,Two), Card(Hearts,Three), Card(Hearts,Four), Card(Hearts,Five), Card(Hearts, Six))
+    val strFlush = StraightFlush(Ten)
     forAll(hands){
         case h : StraightFlush =>  // there is a separate test for this
         case h : Hand => strFlush should be > h
       }
-  }
-  it should "not be constructable with the wrong cards" in {
-    intercept[IllegalArgumentException](StraightFlush(Card(Hearts,Two), Card(Hearts,Three), Card(Hearts,Four), Card(Hearts,Five), Card(Hearts, Two)))
   }
   "Straight" should "be constructable from the correct cards" in {
     Straight(Card(Clubs,Two),Card(Hearts,Three), Card(Diamonds,Four), Card(Clubs,Five), Card(Hearts,Six))
@@ -60,13 +57,13 @@ class PokerSpec extends FlatSpec with Matchers with PropertyChecks{
     Flush(Card(Clubs,Two),Card(Clubs,Four), Card(Clubs,Eight), Card(Clubs,King), Card(Clubs,Queen))
   }
   "Two straight flushes" should "be ranked according to the highest card" in {
-    val lowSf = StraightFlush(Card(Hearts,Two), Card(Hearts,Three), Card(Hearts,Four), Card(Hearts,Five), Card(Hearts, Six))
+    val lowSf = StraightFlush(Three)
     //interestingly if we leave the type hint off here we get a compile error
-    val higherSf : Hand = StraightFlush(Card(Hearts,Three), Card(Hearts,Four), Card(Hearts,Five), Card(Hearts, Six), Card(Hearts,Seven))
+    val higherSf : Hand = StraightFlush(Four)
     lowSf should be < higherSf
   }
   "FourOfAKind" should "be higher than any hand that is not a StraightFlush" in {
-    val foc : Hand = FourOfAKind(Card(Spades,Two),Card(Clubs,Two),Card(Diamonds,Two), Card(Hearts,Two), Card(Hearts,Five))
+    val foc : Hand = FourOfAKind(Two,Five)
     forAll(hands){
       case h : StraightFlush => (foc < h) should equal(true) //get a bizarre diverging implicit expansion error here if we write it another way
       case h : FourOfAKind => //TODO
@@ -74,15 +71,10 @@ class PokerSpec extends FlatSpec with Matchers with PropertyChecks{
     }
   }
   "Two FourOfAKinds" should "be ranked by the value of the 4 cards and then by the value of the highest card" in {
-    val foc : Hand = FourOfAKind(Card(Spades,Two),Card(Clubs,Two),Card(Diamonds,Two), Card(Hearts,Two), Card(Hearts,Five))
-    val foc2 : Hand = FourOfAKind(Card(Spades,Three),Card(Clubs,Three),Card(Diamonds,Three), Card(Hearts,Three), Card(Hearts,Five))
+    val foc : Hand = FourOfAKind(Two,Five)
+    val foc2 : Hand = FourOfAKind(Three,Five)
     foc2 > foc should equal(true)
 
-  }
-  "FourOfAKind" should "not be constructable with invalid cards" in {
-    intercept[IllegalArgumentException]{
-      val foc : Hand = FourOfAKind(Card(Spades,Three),Card(Clubs,Two),Card(Diamonds,Two), Card(Hearts,Two), Card(Hearts,Five))
-    }
   }
 
 
