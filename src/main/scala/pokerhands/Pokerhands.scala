@@ -1,6 +1,5 @@
 package pokerhands
 
-import scala.util.Try
 
 sealed trait Suit
 object Spades extends Suit
@@ -71,26 +70,12 @@ case class Card(suit : Suit, value : Value) extends Ordered[Card]{
 object Hand{
   def apply(fiveCards: FiveCards) : Hand = fiveCards match {
     case StraightFlush(v) => StraightFlush(v)
-    case FourOfAKind(fourVal,singleVal) => FourOfAKind(fourVal,singleVal)
+    case FourOfAKind(fourVal) => FourOfAKind(fourVal)
     case MatchesHighCard(value) => HighCard(value)
-
-
   }
 }
 
 sealed trait Hand extends Ordered[Hand]{
-//  def card1 : Card
-//  def card2 : Card
-//  def card3 : Card
-//  def card4 : Card
-//  def card5 : Card
-//
-//  val cards = List(card1,card2,card3,card4,card5).sorted
-//  val cardsBySuit : Map[Suit,List[Card]] = cards.groupBy(_.suit)
-//  val cardsByValues : Map[Value,List[Card]] = cards.groupBy(_.value)
-//  val highestCard = cards.last
-//  val cardsAreOfSameSuit : Boolean = cardsBySuit.size == 1
-//  val cardsHaveConsecutiveValues : Boolean = cards.sliding(2).forall(pair => pair(0).value.rank == pair(1).value.rank -1)
 }
 
 object MatchesHighCard extends CardOps{
@@ -105,14 +90,13 @@ case class HighCard(highestValue : Value) extends Hand {
 }
 
 trait CardOps{
-  
-  
+
   def cardsBySuit(cards : List[Card]) : Map[Suit,List[Card]] = cards.groupBy(_.suit)
   def cardsByValues(cards : List[Card]) : Map[Value,List[Card]] = cards.groupBy(_.value)
   def highestCard(cards : List[Card]) = cards.sorted.last
   def cardsAreOfSameSuit(cards : List[Card]) : Boolean = cardsBySuit(cards).size == 1
   def cardsHaveConsecutiveValues(cards : List[Card]) : Boolean = cards.sorted.sliding(2).forall(pair => pair(0).value.rank == pair(1).value.rank -1)
-  
+
 }
 
 case class FiveCards(card1 : Card, card2: Card,card3 : Card,card4 : Card,card5 :Card){
@@ -120,7 +104,7 @@ case class FiveCards(card1 : Card, card2: Card,card3 : Card,card4 : Card,card5 :
 }
 
 object StraightFlush extends CardOps{
-  
+
   def unapply(cards : FiveCards) : Option[Value] = {
     if(cardsAreOfSameSuit(cards.cards) && cardsHaveConsecutiveValues(cards.cards)) {
       Some(highestCard(cards.cards).value)
@@ -137,46 +121,22 @@ case class StraightFlush(highestCardValue : Value) extends Hand{
 }
 
 object FourOfAKind extends CardOps{
-  
-  def unapply(fiveCards: FiveCards): Option[(Value,Value)] ={
+
+  def unapply(fiveCards: FiveCards): Option[Value] ={
     val fourCards: Map[Value, List[Card]] = cardsByValues(fiveCards.cards).filter(_._2.length == 4)
-    if(!fourCards.isEmpty){
-      val fourGroupValue : Value = fourCards.values.head(0).value
-      val singleGroupValue : Value = cardsByValues(fiveCards.cards).filter(_._2.length == 1).values.head(0).value
-      Some((fourGroupValue,singleGroupValue))
-      
-    }else None 
-    
+    if(!fourCards.isEmpty) Some(fourCards.values.head(0).value) else None
   }
 }
 
-case class FourOfAKind(fourGroupValue : Value, singleGroupValue : Value) extends Hand {
-
+case class FourOfAKind(fourGroupValue : Value) extends Hand {
 
   override def compare(that: Hand): Int = that match {
     case h : StraightFlush => -1
-    case h : FourOfAKind => if(fourGroupValue == h.fourGroupValue) {
-      singleGroupValue.compare(h.singleGroupValue)
-    }else  fourGroupValue.compare(h.fourGroupValue)
+    case h : FourOfAKind => fourGroupValue.compare(h.fourGroupValue)
     case h : Hand => 1
   }
 }
 
-case class Straight(card1 : Card, card2: Card,card3 : Card,card4 : Card,card5 :Card) extends Hand {
-
-
-  override def compare(that: Hand): Int = ???
-}
-
-case class Flush(card1 : Card, card2: Card,card3 : Card,card4 : Card,card5 :Card) extends Hand {
-
-
-  override def compare(that: Hand): Int = ???
-}
 
 
 
-class PokerHands {
-
-
-}

@@ -50,12 +50,6 @@ class PokerSpec extends FlatSpec with Matchers with PropertyChecks{
         case h : Hand => strFlush should be > h
       }
   }
-  "Straight" should "be constructable from the correct cards" in {
-    Straight(Card(Clubs,Two),Card(Hearts,Three), Card(Diamonds,Four), Card(Clubs,Five), Card(Hearts,Six))
-  }
-  "Flush" should "be constructable from the correct cards" in {
-    Flush(Card(Clubs,Two),Card(Clubs,Four), Card(Clubs,Eight), Card(Clubs,King), Card(Clubs,Queen))
-  }
   "Two straight flushes" should "be ranked according to the highest card" in {
     val lowSf = StraightFlush(Three)
     //interestingly if we leave the type hint off here we get a compile error
@@ -63,7 +57,7 @@ class PokerSpec extends FlatSpec with Matchers with PropertyChecks{
     lowSf should be < higherSf
   }
   "FourOfAKind" should "be higher than any hand that is not a StraightFlush" in {
-    val foc : Hand = FourOfAKind(Two,Five)
+    val foc : Hand = FourOfAKind(Two)
     forAll(hands){
       case h : StraightFlush => (foc < h) should equal(true) //get a bizarre diverging implicit expansion error here if we write it another way
       case h : FourOfAKind => //TODO
@@ -71,8 +65,8 @@ class PokerSpec extends FlatSpec with Matchers with PropertyChecks{
     }
   }
   "Two FourOfAKinds" should "be ranked by the value of the 4 cards and then by the value of the highest card" in {
-    val foc : Hand = FourOfAKind(Two,Five)
-    val foc2 : Hand = FourOfAKind(Three,Five)
+    val foc : Hand = FourOfAKind(Two)
+    val foc2 : Hand = FourOfAKind(Three)
     foc2 > foc should equal(true)
 
   }
