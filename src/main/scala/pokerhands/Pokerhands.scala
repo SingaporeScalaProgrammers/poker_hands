@@ -1,6 +1,5 @@
 package pokerhands
 
-
 sealed trait Suit
 object Spades extends Suit
 object Hearts extends Suit
@@ -8,6 +7,7 @@ object Clubs extends Suit
 object Diamonds extends Suit
 
 sealed trait Value extends Ordered[Value]{
+
   def rank : Int
 
   override def compare(that: Value): Int = rank - that.rank
@@ -96,7 +96,6 @@ trait CardOps{
   def highestCard(cards : List[Card]) = cards.sorted.last
   def cardsAreOfSameSuit(cards : List[Card]) : Boolean = cardsBySuit(cards).size == 1
   def cardsHaveConsecutiveValues(cards : List[Card]) : Boolean = cards.sorted.sliding(2).forall(pair => pair(0).value.rank == pair(1).value.rank -1)
-
 }
 
 case class FiveCards(card1 : Card, card2: Card,card3 : Card,card4 : Card,card5 :Card){
@@ -124,7 +123,7 @@ object FourOfAKind extends CardOps{
 
   def unapply(fiveCards: FiveCards): Option[Value] ={
     val fourCards: Map[Value, List[Card]] = cardsByValues(fiveCards.cards).filter(_._2.length == 4)
-    if(!fourCards.isEmpty) Some(fourCards.values.head(0).value) else None
+    if(fourCards.nonEmpty) Some(fourCards.values.head(0).value) else None
   }
 }
 
