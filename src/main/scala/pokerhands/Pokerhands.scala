@@ -13,6 +13,7 @@ sealed trait Value extends Ordered[Value]{
 
   override def compare(that: Value): Int = rank - that.rank
 }
+
 object Two extends Value{
   override def rank: Int = 0
 }
@@ -53,7 +54,7 @@ object Ace extends Value {
   override def rank: Int = 12
 }
 
-object Card{
+object Cards{
   val suits = List(Hearts,Diamonds,Spades,Clubs)
   val values = List(Two,Three,Four,Five,Six,Seven,Eight,Nine,Ten,Jack,Queen,King,Ace)
   val pack = for {
@@ -70,7 +71,10 @@ case class Card(suit : Suit, value : Value) extends Ordered[Card]{
 object Hand{
   def apply(card1 : Card, card2: Card,card3 : Card,card4 : Card,card5 :Card) : Hand = {
     Try(StraightFlush(card1,card2,card3,card4,card5)).recover{
+      case _ => FourOfAKind(card1,card2,card3,card4,card5)
+    }.recover{
       case _ => HighCard(card1,card2,card3,card4,card5)
+
     }
   }.get
 }
@@ -81,18 +85,13 @@ sealed trait Hand extends Ordered[Hand]{
   def card3 : Card
   def card4 : Card
   def card5 : Card
+
   val cards = List(card1,card2,card3,card4,card5).sorted
-  val cardsBySuit : Map[Suit,List[Card]] = cards.foldLeft(Map[Suit,List[Card]]()){
-    (acc,card) => {
-      if(acc.contains(card.suit)) acc + (card.suit-> (card ::acc(card.suit)))
-      else acc + (card.suit -> List(card))
-    }
-  }
+  val cardsBySuit : Map[Suit,List[Card]] = cards.groupBy(_.suit)
+  val cardsByValues : Map[Value,List[Card]] = cards.groupBy(_.value)
   val highestCard = cards.last
   val cardsAreOfSameSuit : Boolean = cardsBySuit.size == 1
-  val cardsHaveConsecutiveValues : Boolean = cards.sliding(2).foldLeft(true){
-    (isConsecutive, pair) => if(pair(0).value.rank+1 != pair(1).value.rank) false else isConsecutive
-  }
+  val cardsHaveConsecutiveValues : Boolean = cards.sliding(2).forall(pair => pair(0).value.rank == pair(1).value.rank -1)
 }
 
 case class HighCard(card1 : Card, card2: Card,card3 : Card,card4 : Card,card5 :Card) extends Hand {
@@ -106,6 +105,24 @@ case class StraightFlush(card1 : Card, card2: Card,card3 : Card,card4 : Card,car
   override def compare(that: Hand): Int = that match{
     case h : StraightFlush => highestCard.value.rank - that.highestCard.value.rank
     case _ => 1
+  }
+}
+
+case class FourOfAKind(card1 : Card, card2: Card,card3 : Card,card4 : Card,card5 :Card) extends Hand {
+
+  val fourCards: Map[Value, List[Card]] = cardsByValues.filter(_._2.length == 4)
+
+  require(!fourCards.isEmpty)
+
+  val fourGroupValue : Value = fourCards.values.head(0).value
+  val singleGroupValue : Value = cardsByValues.filter(_._2.length == 1).values.head(0).value
+
+  override def compare(that: Hand): Int = that match {
+    case h : StraightFlush => -1
+    case h : FourOfAKind => if(h.fourGroupValue.rank == fourGroupValue.rank) {
+      singleGroupValue.rank - h.singleGroupValue.rank
+    }else  fourGroupValue.rank  - h.fourGroupValue.rank
+    case h : Hand => 1
   }
 }
 
