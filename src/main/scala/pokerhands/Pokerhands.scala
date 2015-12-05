@@ -70,8 +70,8 @@ case class Card(suit : Suit, value : Value) extends Ordered[Card]{
 object Hand{
   def apply(fiveCards: FiveCards) : Hand = fiveCards match {
     case StraightFlush(v) => StraightFlush(v)
-    case FourOfAKind(fourVal) => FourOfAKind(fourVal)
-    case MatchesHighCard(value) => HighCard(value)
+    case FourOfAKind(v) => FourOfAKind(v)
+    case MatchesHighCard(v) => HighCard(v)
   }
 }
 
